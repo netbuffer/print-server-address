@@ -10,7 +10,11 @@ public class SpringBootAppStartedListener implements ApplicationListener<Context
     public void onApplicationEvent(ContextRefreshedEvent contextRefreshedEvent) {
         Environment environment = contextRefreshedEvent.getApplicationContext().getEnvironment();
         String serverPort = environment.getProperty("server.port") == null ? "" : ":" + environment.getProperty("server.port");
-        String contextPath = environment.getProperty("server.context-path") == null ? "/" : "/" + environment.getProperty("context-path");
+        String contextPath = environment.getProperty("server.context-path");
+        if (contextPath == null || contextPath.trim().length() == 0) {
+            contextPath = environment.getProperty("server.servlet.context-path");
+        }
+        contextPath = contextPath == null ? "/" : (contextPath.startsWith("/") ? contextPath : "/" + contextPath);
         System.out.println("your app started,access http://localhost" + serverPort + contextPath);
     }
 }
