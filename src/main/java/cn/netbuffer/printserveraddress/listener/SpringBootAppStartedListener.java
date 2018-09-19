@@ -4,13 +4,19 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.core.env.Environment;
+import org.springframework.util.StringUtils;
+
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class SpringBootAppStartedListener implements ApplicationListener<ContextRefreshedEvent> {
 
     @Override
     public void onApplicationEvent(ContextRefreshedEvent contextRefreshedEvent) {
         ApplicationContext applicationContext = contextRefreshedEvent.getApplicationContext();
-        if(applicationContext.getParent()!=null){
+        if (applicationContext.getParent() != null) {
             return;
         }
         Environment environment = applicationContext.getEnvironment();
@@ -20,6 +26,17 @@ public class SpringBootAppStartedListener implements ApplicationListener<Context
             contextPath = environment.getProperty("server.servlet.context-path");
         }
         contextPath = contextPath == null ? "/" : (contextPath.startsWith("/") ? contextPath : "/" + contextPath);
-        System.out.println("your app started,access http://localhost" + serverPort + contextPath);
+        String lanIp = null;
+        try {
+            lanIp = InetAddress.getLocalHost().getHostAddress();
+        } catch (UnknownHostException e) {
+            System.out.println(e.getLocalizedMessage());
+        }
+        List addresses = new ArrayList(2);
+        addresses.add("http://localhost" + serverPort + contextPath);
+        if (!StringUtils.isEmpty(lanIp)) {
+            addresses.add("http://" + lanIp + serverPort + contextPath);
+        }
+        System.out.println("▹▹▹▹▹▹▹▹ your app started,access "+addresses.toString()+"◃◃◃◃◃◃◃◃");
     }
 }
