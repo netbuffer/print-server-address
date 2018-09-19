@@ -1,5 +1,6 @@
 package cn.netbuffer.printserveraddress.listener;
 
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.core.env.Environment;
@@ -8,7 +9,11 @@ public class SpringBootAppStartedListener implements ApplicationListener<Context
 
     @Override
     public void onApplicationEvent(ContextRefreshedEvent contextRefreshedEvent) {
-        Environment environment = contextRefreshedEvent.getApplicationContext().getEnvironment();
+        ApplicationContext applicationContext = contextRefreshedEvent.getApplicationContext();
+        if(applicationContext.getParent()!=null){
+            return;
+        }
+        Environment environment = applicationContext.getEnvironment();
         String serverPort = environment.getProperty("server.port") == null ? "" : ":" + environment.getProperty("server.port");
         String contextPath = environment.getProperty("server.context-path");
         if (contextPath == null || contextPath.trim().length() == 0) {
