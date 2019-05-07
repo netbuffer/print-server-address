@@ -37,6 +37,6 @@ public class SpringBootAppStartedListener implements ApplicationListener<Context
         if (!StringUtils.isEmpty(lanIp)) {
             addresses.add("http://" + lanIp + serverPort + contextPath);
         }
-        System.out.println("▹▹▹▹▹▹▹▹ your app started,access "+addresses.toString()+" ◃◃◃◃◃◃◃◃");
+        System.out.println("▹▹▹▹▹▹▹▹ your app started,access " + addresses.toString() + " ◃◃◃◃◃◃◃◃");
     }
 }
