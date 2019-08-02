@@ -1,5 +1,7 @@
 package cn.netbuffer.printserveraddress.listener;
 
+import cn.netbuffer.printserveraddress.config.PrintServerAddressProperties;
+import lombok.Data;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
@@ -11,7 +13,14 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 
+@Data
 public class SpringBootAppStartedListener implements ApplicationListener<ContextRefreshedEvent> {
+
+    private PrintServerAddressProperties printServerAddressProperties;
+
+    public SpringBootAppStartedListener(PrintServerAddressProperties printServerAddressProperties) {
+        this.printServerAddressProperties = printServerAddressProperties;
+    }
 
     @Override
     public void onApplicationEvent(ContextRefreshedEvent contextRefreshedEvent) {
@@ -37,6 +46,6 @@ public class SpringBootAppStartedListener implements ApplicationListener<Context
         if (!StringUtils.isEmpty(lanIp)) {
             addresses.add("http://" + lanIp + serverPort + contextPath);
         }
-        System.out.println("▹▹▹▹▹▹▹▹ your app started,access " + addresses.toString() + " ◃◃◃◃◃◃◃◃");
+        System.out.println(printServerAddressProperties.getPrefix() + " your app started,access " + addresses.toString() + " " + printServerAddressProperties.getSuffix());
     }
 }
