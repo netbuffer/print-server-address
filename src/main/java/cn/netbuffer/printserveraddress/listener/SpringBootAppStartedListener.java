@@ -2,6 +2,7 @@ package cn.netbuffer.printserveraddress.listener;
 
 import cn.netbuffer.printserveraddress.config.PrintServerAddressProperties;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
@@ -13,6 +14,7 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 @Data
 public class SpringBootAppStartedListener implements ApplicationListener<ContextRefreshedEvent> {
 
@@ -20,12 +22,14 @@ public class SpringBootAppStartedListener implements ApplicationListener<Context
 
     public SpringBootAppStartedListener(PrintServerAddressProperties printServerAddressProperties) {
         this.printServerAddressProperties = printServerAddressProperties;
+        log.debug("load SpringBootAppStartedListener bean");
     }
 
     @Override
     public void onApplicationEvent(ContextRefreshedEvent contextRefreshedEvent) {
+        log.debug("contextRefreshedEvent:{}", contextRefreshedEvent);
         ApplicationContext applicationContext = contextRefreshedEvent.getApplicationContext();
-        if (applicationContext.getParent() != null) {
+        if (!printServerAddressProperties.isIgnoreParentContext() && applicationContext.getParent() != null) {
             return;
         }
         Environment environment = applicationContext.getEnvironment();

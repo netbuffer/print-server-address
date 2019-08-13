@@ -9,5 +9,6 @@ public class PrintServerAddressProperties {
 
     private String prefix="▹▹▹▹▹▹▹▹";
     private String suffix="◃◃◃◃◃◃◃◃";
+    private boolean ignoreParentContext=false;
 
 }
