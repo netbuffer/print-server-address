@@ -12,7 +12,7 @@
 
     <groupId>cn.netbuffer</groupId>
     <artifactId>print-server-address</artifactId>
-    <version>2.1.0</version>
+    <version>2.2.0</version>
 
     <name>print-server-address</name>
     <description>
@@ -68,6 +68,13 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter</artifactId>
             <version>2.1.6.RELEASE</version>
+        </dependency>
+        <!--自动生成spring-configuration-metadata.json-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-configuration-processor</artifactId>
+            <version>2.1.6.RELEASE</version>
+            <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
