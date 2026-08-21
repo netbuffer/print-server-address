@@ -9,20 +9,15 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import javax.annotation.Resource;
-
 @Slf4j
 @Configuration
 @ConditionalOnClass(SpringBootAppStartedListener.class)
 @EnableConfigurationProperties(PrintServerAddressProperties.class)
 public class PrintServerAddressConfiguration {
 
-    @Resource
-    private PrintServerAddressProperties printServerAddressProperties;
-
     @Bean
     @ConditionalOnMissingBean
-    public SpringBootAppStartedListener buildSpringBootAppStartedListener() {
+    public SpringBootAppStartedListener buildSpringBootAppStartedListener(PrintServerAddressProperties printServerAddressProperties) {
         return new SpringBootAppStartedListener(printServerAddressProperties);
     }
 

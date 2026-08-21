@@ -47,7 +47,7 @@ public class SpringBootAppStartedListener implements ApplicationListener<Context
         }
         List addresses = new ArrayList(2);
         addresses.add("http://localhost" + serverPort + contextPath);
-        if (!StringUtils.isEmpty(lanIp)) {
+        if (StringUtils.hasText(lanIp)) {
             addresses.add("http://" + lanIp + serverPort + contextPath);
         }
         System.out.println(printServerAddressProperties.getPrefix() + " your app started,access " + addresses.toString() + " " + printServerAddressProperties.getSuffix());
