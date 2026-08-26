@@ -1,0 +1,134 @@
+name: Build & Publish
+
+on:
+  push:
+    branches: [master, main]
+    tags: ['v*']
+  pull_request:
+    branches: [master, main]
+
+# contents: write -> 创建 GitHub Release / 推送 gh-pages 分支
+# packages: write -> 发布构件到 GitHub Packages (maven.pkg.github.com)
+permissions:
+  contents: write
+  packages: write
+
+env:
+  GROUP_ID: cn.netbuffer
+  ARTIFACT_ID: print-server-address
+
+jobs:
+  build:
+    name: Build with Temurin JDK 8
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      # 项目编译目标为 java 8 字节码且使用旧版 lombok(1.18.8)，必须使用 JDK 8 构建
+      - name: Set up Temurin JDK 8
+        uses: actions/setup-java@v5
+        with:
+          java-version: '8'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Build with Maven
+        run: mvn clean package -DskipTests --batch-mode
+
+      - name: Resolve project version
+        run: echo "VERSION=$(mvn -q -B -DforceStdout -Dexpression=project.version help:evaluate)" >> "$GITHUB_ENV"
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ env.ARTIFACT_ID }}
+          path: |
+            target/${{ env.ARTIFACT_ID }}-${{ env.VERSION }}.jar
+            target/${{ env.ARTIFACT_ID }}-${{ env.VERSION }}-sources.jar
+            target/${{ env.ARTIFACT_ID }}-${{ env.VERSION }}-javadoc.jar
+          retention-days: 30
+
+  release:
+    name: Attach jars to GitHub Release
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: ${{ env.ARTIFACT_ID }}
+          path: ./dist
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v3
+        with:
+          files: ./dist/*.jar
+          generate_release_notes: true
+
+  publish:
+    # 打 v* tag 时触发发布；pom.xml 的 <version> 应与 tag 保持一致（如 v4.0.1 <-> 4.0.1）
+    name: Publish to GitHub Packages & gh-pages Maven repo
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Temurin JDK 8
+        uses: actions/setup-java@v5
+        with:
+          java-version: '8'
+          distribution: 'temurin'
+          server-id: github
+          server-username: GITHUB_ACTOR
+          server-password: GITHUB_TOKEN
+
+      - name: Download artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: ${{ env.ARTIFACT_ID }}
+          path: target
+
+      - name: Resolve project version
+        run: echo "VERSION=$(mvn -q -B -DforceStdout -Dexpression=project.version help:evaluate)" >> "$GITHUB_ENV"
+
+      # 不用 `mvn deploy`：pom 中 central-publishing-maven-plugin(extensions=true) 接管了 deploy 生命周期，
+      # 这里用 deploy:deploy-file 直接把 jar/sources/javadoc 推送到目标仓库，并跳过 gpg 签名
+      - name: Deploy jar / sources / javadoc
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ARGS="-DgroupId=${GROUP_ID} -DartifactId=${ARTIFACT_ID} -Dversion=${VERSION} \
+            -Dpackaging=jar \
+            -DpomFile=pom.xml \
+            -Dfile=target/${ARTIFACT_ID}-${VERSION}.jar \
+            -Dsources=target/${ARTIFACT_ID}-${VERSION}-sources.jar \
+            -Djavadoc=target/${ARTIFACT_ID}-${VERSION}-javadoc.jar"
+
+          echo "::group::Deploy to GitHub Packages"
+          mvn --batch-mode deploy:deploy-file ${ARGS} \
+            -DrepositoryId=github \
+            -Durl=https://maven.pkg.github.com/${{ github.repository }}
+          echo "::endgroup::"
+
+          echo "::group::Stage local Maven repository (for gh-pages)"
+          mvn --batch-mode deploy:deploy-file ${ARGS} \
+            -Durl=file://$PWD/maven-repo
+          echo "::endgroup::"
+          find maven-repo -type f | sed 's|^|staged: |'
+
+      # gh-pages 分支即一个匿名可访问的 Maven 仓库：
+      # 公网用户只需在 pom.xml 中添加 repository https://raw.githubusercontent.com/netbuffer/print-server-address/gh-pages 即可依赖，
+      # clean:false 保证历史版本构件不被覆盖删除
+      - name: Publish staged repository to gh-pages branch
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: gh-pages
+          folder: maven-repo
+          clean: false

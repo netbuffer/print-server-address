@@ -27,6 +27,66 @@
 </dependency>
 ```
 
+### 从 GitHub 仓库获取（Maven Central 之外的渠道）
+
+每次发布 `v*` tag 时，CI 会自动把 jar 发布到 GitHub Release、GitHub Packages 以及 gh-pages 分支上的 Maven 仓库。
+
+#### 方式一：gh-pages Maven 仓库（免登录，推荐） ✅
+
+公网用户无需注册/令牌，只需在 `pom.xml` 中添加仓库后正常依赖即可：
+
+```xml
+<repositories>
+    <repository>
+        <id>netbuffer-github</id>
+        <url>https://raw.githubusercontent.com/netbuffer/print-server-address/gh-pages</url>
+    </repository>
+</repositories>
+
+<dependency>
+    <groupId>cn.netbuffer</groupId>
+    <artifactId>print-server-address</artifactId>
+    <version>4.0.0</version>
+</dependency>
+```
+
+#### 方式二：GitHub Packages
+
+> ⚠️ GitHub Packages 的限制：即使是公开包，拉取方也需要携带 GitHub 访问令牌（PAT，需 `read:packages` 权限）。
+
+1. 在 `~/.m2/settings.xml` 中配置凭据：
+
+```xml
+<servers>
+    <server>
+        <id>github</id>
+        <username>你的GitHub用户名</username>
+        <password>ghp_xxxxxxxxxxxx</password>
+    </server>
+</servers>
+```
+
+2. 在 `pom.xml` 中添加仓库与依赖：
+
+```xml
+<repositories>
+    <repository>
+        <id>github</id>
+        <url>https://maven.pkg.github.com/netbuffer/print-server-address</url>
+    </repository>
+</repositories>
+
+<dependency>
+    <groupId>cn.netbuffer</groupId>
+    <artifactId>print-server-address</artifactId>
+    <version>4.0.0</version>
+</dependency>
+```
+
+#### 方式三：直接下载
+
+前往 [GitHub Releases](https://github.com/netbuffer/print-server-address/releases) 页面手动下载 jar / sources / javadoc。
+
 ## 📋 环境兼容性
 
 | Spring Boot | JDK | 是否支持 |
